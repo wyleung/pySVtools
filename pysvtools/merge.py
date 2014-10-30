@@ -15,7 +15,6 @@ import hashlib
 import itertools
 import logging
 import os
-import pprint
 import sys
 import re
 
@@ -28,8 +27,8 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from .genomic_regions import ExclusionRegion, buildExclusion
-from .models import *
+from genomic_regions import ExclusionRegion, buildExclusion
+from models import *
 # read all samples in memory
 
 def extractTXmate( alt ):
@@ -312,18 +311,6 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
                     )
                 )
 
-#                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-#                        t.chrA, 
-#                        t.chrApos, 
-#                        t.chrB, 
-#                        t.chrBpos, 
-#                        t.sv_type, 
-#                        t.dp,
-#                        t.size, 
-#                        "\t".join(locations_found)
-#                        )
-#                )
-
                 structural_events.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
                                         t.chrA, 
                                         t.chrApos, 
@@ -378,7 +365,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-c', '--centromers', 
-        help='Centromers definitions file in bed format', required=True)
+        help='Centromers definitions file in BED format', required=True)
     parser.add_argument('-f', '--flanking', type=int, 
         help='Centerpoint flanking', required=True)
 
@@ -395,4 +382,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.vcf, args.centromers, args.output, args.flanking, args.bedoutput, args.translocation_only)
+    main( args.vcf, args.centromers, 
+        args.output, args.flanking, args.bedoutput, args.translocation_only)

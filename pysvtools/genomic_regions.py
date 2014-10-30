@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 
 import vcf
-import sys
 
 class ExclusionRegion(object):
     def __init__( self, chromosome, start, end, *args, **kwargs ):
@@ -17,10 +16,10 @@ class ExclusionRegion(object):
             return False
         if qPos > self.end:
             return False
-            
+
         if qPos > self.start and qPos < self.end:
             return True
-            
+
         # to be safe for any other combinations .
         return False
 
