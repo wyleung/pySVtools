@@ -1,0 +1,6 @@
+site_name: pySVtools
+pages:
+- ['index.md', 'Home']
+theme: readthedocs
+repo_url: https://github.com/LUMC/pySVtools
+
