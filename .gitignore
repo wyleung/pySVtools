@@ -1,4 +1,6 @@
 *~
 *.pyc
 site/*
-
+build/*
+dist/*
+pysvtools.egg-info/*
