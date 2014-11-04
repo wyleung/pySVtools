@@ -34,4 +34,18 @@ A sample report of the intersected results:
 |chr10|	|3690412|	|chr10|	|3691814|	|INS|	|61|	|1402|	|chr10:3690412-3691814|	|1402|	|	|	|	|
 |chr10|	|4290075|	|chr10|	|4291663|	|DEL|	|73|	|1588|	|chr10:4290103-4291692|	|1589|	|chr10:4290109-4291673|	|1564|
 
+Columns explained:
 
+ 1. Chromosome of breakpoint 1
+ 1. Chromosomal position of breakpoint 1
+ 1. Chromosome of breakpoint 2
+ 1. Chromosomal position of breakpoint 2
+ 1. Annotated Structural Variation Type, from: DEL, INS, CTX, INV, ITX
+ 1. Estimated Size of the event
+
+Sample specific columns
+
+ 1. Chromosomal position of both ends on this sample
+ 1. Estimated size of this event in this sample
+
+## 
