@@ -9,13 +9,26 @@ A collection of usefull operations on VCF files containing structural variants c
 
     # Bleeding edge version:
     pip install git+https://github.com/wyleung/pySVtools.git#egg=pysvtools
-    
 
-# Merging / intersecting
+# Dependencies
 
-For `DEL` and `INS` events, you can intersect 2 or more `VCF` -files using the following command:
+Installation of the dependencies is done if the installation is done using `easy_install` or `pip`. However, when used directly from the source, you should install the following external libraries:
 
-    mergeVCF -f 100 -i sample1.vcf sample2.vcf -o intersected.tsv -b intersected.bed > intersected.vcf
+( or use `pip install -r requirements.txt`)
+
+
+ - [pyvcf](https://github.com/jamescasbon/PyVCF)
+ 
+
+
+# Intersecting IN/DEL events
+
+For `DEL` and `INS` events, you can intersect 2 or more `VCF`-files using the following command:
+
+    mergeVCF -f 100 -i sample1.vcf sample2.vcf \
+                    -o intersected.tsv -b intersected.bed > intersected.vcf
+
+The resulting 
 
 
 # Help
@@ -43,9 +56,9 @@ optional arguments:
 
 # Features
 
- 1. Summarizing SV events
  1. Intersecting SV events, using multiple VCF. Usefull for finding recuring event accros multiple 'samples'
  1. Filtering events using known regions using ``bed`` files describing f.e.g. GC-rich regions and/or known CNV regions
+ 1. Summarizing SV events in a nice LaTeX table
 
 # Contact
 
