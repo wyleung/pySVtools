@@ -11,7 +11,6 @@ __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 import argparse
 import collections
 import datetime
-import hashlib
 import itertools
 import logging
 import os
@@ -71,14 +70,9 @@ def loadEventFromVCF( s, vcf_reader, edb, centerpointFlanking, transonly ):
         
         if transonly and SVTYPE != 'CTX':
             continue
-        
-#        skip=False
-#        for excl in edb:
-#            if excl.overlaps( rec.CHROM, rec.POS ):
-#                skip=True
+
         skip = True in list(filter( (lambda y: y == True), list( map( (lambda x: x.overlaps( rec.CHROM, rec.POS )), edb ) ) ))
         if skip:
-            print(SVTYPE)
             skipped_events += 1
             continue
 
@@ -165,12 +159,27 @@ def loadEventFromVCF( s, vcf_reader, edb, centerpointFlanking, transonly ):
             else:
                 svDB[ t.virtualChr ] = svDB.get( t.virtualChr, [] )
                 svDB[ t.virtualChr ].append( t )
-    logger.info("Skipped load {} events close to centromeric region.".format( skipped_events ))
+    logger.info("Skipped {} events overlapping excluded regions.".format( skipped_events ))
     return svDB
+
+def vcfHeader():
+    # print the VCF header
+    TS_NOW = datetime.datetime.now()
+    VCF_HEADER = """##fileformat=VCFv4.1
+##fileDate={filedate}
+##source=yamsvp-transmerge
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format( filedate=TS_NOW.strftime( "%Y%m%d" ) )
+    return VCF_HEADER + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
 
 
 # main functions
-def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput, transonly=False):
+def startMerge(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput, transonly=False):
     
     samplelist = vcf_files
 
@@ -178,7 +187,9 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
     svDB = collections.OrderedDict()
 
     commonhits = collections.OrderedDict()
-    edb = buildExclusion( centromers_file )
+    edb = []
+    if centromers_file:
+        edb = buildExclusion( centromers_file )
 
     for s in samplelist:
         logger.info('Reading SV-events from sample: {} '.format( s ))
@@ -200,7 +211,7 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
     for (s1, s2) in pairs_to_check:
         _s1 = os.path.basename( s1 )
         _s2 = os.path.basename( s2 )
-        logger.info('Pairwise compare: {} x {}'.format( _s1, _s2 ))
+        logger.debug('Pairwise compare: {} x {}'.format( _s1, _s2 ))
         for _chromosome in chromosomes_to_check:
             s1_calls_in_chromosome = svDB[ s1 ].get( _chromosome, [] )
             s2_calls_in_chromosome = svDB[ s2 ].get( _chromosome, [] )
@@ -242,27 +253,16 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
 
                         # when found, continue? It is the best approach to break this long list comparison?
                         break
-            logger.info("Common hits so far in {}: {} / {} vs {}".format( _chromosome, _match, s1_n_calls, s2_n_calls ))
+            logger.debug("Common hits so far in {}: {} / {} vs {}".format( _chromosome, _match, s1_n_calls, s2_n_calls ))
             
 
-    # print the VCF header
-    TS_NOW = datetime.datetime.now()
-    VCF_HEADER = """##fileformat=VCFv4.1
-##fileDate={filedate}
-##source=yamsvp-transmerge
-##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
-##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
-##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format( filedate=TS_NOW.strftime( "%Y%m%d" ) )
-    print(VCF_HEADER)
-    print("#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default")
+    # vcf header
+    print( vcfHeader() )
 
+    # tsv file
     samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x) ), samplelist))
     header_line = "\t".join(['ChrA', 'ChrApos', 'ChrB', 'ChrBpos', 'SVTYPE', 'DP', 'Size', samplecols])
-    
+
 
     structural_events = open(output_file, 'w')
     structural_events.write("{}\n".format(header_line))
@@ -289,6 +289,7 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
                 t = items[ fKey ]
                 
                 # write the new vcf record on the commandline
+                # TODO: write the DP for each of the callers/sample
                 
                 INFOFIELDS = "IMPRECISE;SVTYPE={};END={}".format(
                     t.sv_type,
@@ -332,10 +333,12 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
                         )
                     ))
                 else:
+                    # for CTX events, we write 2 tracks, one for the left breakpoint and one for th right breakpoint
+                    # both sites are flanked with 50 bases to generate a valid bed file and used in IGV to mark the region
                     bed_structural_events.write("{chrom}\t{start}\t{end}\t{annot}\n".format(
                         chrom=t.chrA,
-                        start=t.chrApos,
-                        end=t.chrApos + 100,
+                        start=t.chrApos - 50,
+                        end=t.chrApos + 50,
                         annot="SVTYPE={svtype};DP={dp};SIZE={size};MATE={chrb}:{chrbpos}".format(
                             svtype=t.sv_type,
                             dp=t.dp,
@@ -346,8 +349,8 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
                     ))
                     bed_structural_events.write("{chrom}\t{start}\t{end}\t{annot}\n".format(
                         chrom=t.chrB,
-                        start=t.chrBpos,
-                        end=t.chrBpos + 100,
+                        start=t.chrBpos - 50,
+                        end=t.chrBpos + 50,
                         annot="SVTYPE={svtype};DP={dp};SIZE={size};MATE={chrb}:{chrbpos}".format(
                             svtype=t.sv_type,
                             dp=t.dp,
@@ -360,18 +363,17 @@ def main(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput
 
     structural_events.close()
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-c', '--centromers', 
-        help='Centromers definitions file in BED format', required=True)
+        help='Centromers definitions file in BED format')
+
     parser.add_argument('-f', '--flanking', type=int, 
-        help='Centerpoint flanking', required=True)
+        help='Centerpoint flanking [100]', default=100)
 
     parser.add_argument('-t', '--translocation_only', action='store_true',
         help='Do translocations only', required=False, default=False)
-
 
     parser.add_argument('-i', '--vcf', nargs='+', 
         help='The VCF(s) to compare, can be supplied multiple times')
@@ -379,8 +381,14 @@ if __name__ == "__main__":
         help='Output summary to [sample.tsv]', default='sample.tsv')
     parser.add_argument('-b', '--bedoutput', 
         help='Output bed file to [sample.bed]', default='sample.bed')
-
     args = parser.parse_args()
-
-    main( args.vcf, args.centromers, 
+    
+    if args.vcf == None or len(args.vcf) < 2:
+        logger.error("Please supply at least 2 VCF files to merge")
+        sys.exit(1)
+    
+    startMerge( args.vcf, args.centromers, 
         args.output, args.flanking, args.bedoutput, args.translocation_only)
+
+if __name__ == "__main__":
+    main()

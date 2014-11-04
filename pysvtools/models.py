@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 from __future__ import print_function
+import hashlib
 
 __desc__= """"""
 __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
