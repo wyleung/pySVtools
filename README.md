@@ -28,7 +28,11 @@ For `DEL` and `INS` events, you can intersect 2 or more `VCF`-files using the fo
     mergeVCF -f 100 -i sample1.vcf sample2.vcf \
                     -o intersected.tsv -b intersected.bed > intersected.vcf
 
-The resulting 
+The resulting `tsv` file is a matrix listing the:
+
+ - Intersected hits, with both breakpoints (5' and 3'), coverage (DP) and size.
+ - Hit `location` in each sample, and size of the event
+
 
 
 # Help
