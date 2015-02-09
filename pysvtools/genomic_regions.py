@@ -5,23 +5,12 @@ import vcf
 class ExclusionRegion(object):
     def __init__( self, chromosome, start, end, *args, **kwargs ):
         self.chromosome = chromosome
-        self.start = start
-        self.end = end
+        self.start = int(start)
+        self.end = int(end)
 
     def overlaps( self, qChr, qPos ):
         # simple check on chromosome
-        if qChr != self.chromosome:
-            return False
-        if qPos < self.start:
-            return False
-        if qPos > self.end:
-            return False
-
-        if qPos > self.start and qPos < self.end:
-            return True
-
-        # to be safe for any other combinations .
-        return False
+        return (qChr == self.chromosome and qPos >= self.start and qPos <= self.end)
 
     def __eq__(self, other):
         # a little bit different, abuse the eq function to see whether a region

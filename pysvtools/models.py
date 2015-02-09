@@ -139,3 +139,17 @@ class Event(object):
             self.chrBpos
         )
 
+    @property
+    def bedRow(self):
+        if self.chrA == self.chrB:
+            fmtstring = "{0}\t{1}\t{3}\tindel"
+        else:
+            fmtstring = "{0}\t{1}\t{4}\tctx\n{2}\t{3}\t{5}\tctx"
+        return fmtstring.format(
+            self.chrA,
+            self.chrApos,
+            self.chrB,
+            self.chrBpos,
+            self.chrApos+1,
+            self.chrBpos+1
+        )
