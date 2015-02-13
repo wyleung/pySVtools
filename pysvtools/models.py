@@ -150,6 +150,6 @@ class Event(object):
             self.chrApos,
             self.chrB,
             self.chrBpos,
-            self.chrApos+1,
-            self.chrBpos+1
+            self.chrApos+100,
+            self.chrBpos+100
         )

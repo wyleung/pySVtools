@@ -1,7 +1,5 @@
 #!/usr/bin/env python2
 
-import vcf
-
 class ExclusionRegion(object):
     def __init__( self, chromosome, start, end, *args, **kwargs ):
         self.chromosome = chromosome

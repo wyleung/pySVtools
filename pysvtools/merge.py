@@ -187,7 +187,7 @@ def vcfHeader():
 
 
 # main functions
-def startMerge(vcf_files, centromers_file, output_file, centerpointFlanking, bedoutput, transonly=False,
+def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, bedoutput, transonly=False,
                regions_out="regions_out.bed", vcf_output="output.vcf"):
     regions_out_file = open(regions_out, "w")
     vcf_output_file = open(vcf_output, "w")
@@ -199,8 +199,8 @@ def startMerge(vcf_files, centromers_file, output_file, centerpointFlanking, bed
 
     commonhits = collections.OrderedDict()
     edb = []
-    if centromers_file:
-        edb = buildExclusion(centromers_file)
+    for exclusion_region in exclusion_regions:
+        edb += buildExclusion(exclusion_region)
 
     for s in samplelist:
         logger.info('Reading SV-events from sample: {} '.format(s))
@@ -379,11 +379,16 @@ def startMerge(vcf_files, centromers_file, output_file, centerpointFlanking, bed
     structural_events.close()
     regions_out_file.close()
 
+class Intersection(object):
+    def __init__(self):
+        pass
+
+
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-c', '--exclusion_regions',
+    parser.add_argument('-c', '--exclusion_regions', action='append',
                         help='Exclusion regions file in BED format')
 
     parser.add_argument('-f', '--flanking', type=int,
@@ -408,7 +413,7 @@ def main():
         logger.error("Please supply at least 2 VCF files to merge")
         sys.exit(1)
 
-    startMerge(args.vcf, args.centromers,
+    startMerge(args.vcf, args.exclusion_regions,
                args.output, args.flanking, args.bedoutput, args.translocation_only, args.regions_out, args.vcfoutput)
 
 
