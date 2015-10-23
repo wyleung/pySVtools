@@ -25,7 +25,7 @@ Installation of the dependencies is done if the installation is done using `easy
 
 For `DEL` and `INS` events, you can intersect 2 or more `VCF`-files using the following command:
 
-    mergeVCF -f 100 -i sample1.vcf sample2.vcf \
+    mergevcf -f 100 -i sample1.vcf sample2.vcf \
                     -o intersected.tsv -b intersected.bed > intersected.vcf
 
 The resulting `tsv` file is a matrix listing the:
