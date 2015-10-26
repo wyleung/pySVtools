@@ -151,7 +151,10 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
             # all other events not covered in this analysis, we only check the overlap
             try:
                 if "SVEND" in rec.INFO.keys():
-                    end = rec.INFO['SVEND'][0]
+                    if type(rec.INFO['SVEND']) == type([]):
+                        end = rec.INFO['SVEND'][0]
+                    else:
+                        end = rec.INFO['SVEND']
                 elif "END" in rec.INFO.keys():
                     end = rec.INFO['END'][0]
                 elif "SVLEN" in rec.INFO.keys():
@@ -199,6 +202,8 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
 
     commonhits = collections.OrderedDict()
     edb = []
+    if type(exclusion_regions) != type([]):
+        exclusion_regions = []
     for exclusion_region in exclusion_regions:
         edb += buildExclusion(exclusion_region)
 
