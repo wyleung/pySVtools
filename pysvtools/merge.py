@@ -156,7 +156,10 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                     else:
                         end = rec.INFO['SVEND']
                 elif "END" in rec.INFO.keys():
-                    end = rec.INFO['END'][0]
+                    if type(rec.INFO['END']) == type([]):
+                        end = rec.INFO['END'][0]
+                    else:
+                        end = rec.INFO['END']
                 elif "SVLEN" in rec.INFO.keys():
                     end = rec.POS + abs(SVLEN)
                 t = Event(rec.CHROM, rec.POS, rec.CHROM, end,
