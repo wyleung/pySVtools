@@ -5,10 +5,10 @@ A collection of usefull operations on VCF files containing structural variants c
 # Installation
 
     # Stable version
-    pip install pySVtools
+    pip install -U pySVtools
 
     # Bleeding edge version:
-    pip install git+https://github.com/wyleung/pySVtools.git#egg=pysvtools
+    pip install -U git+https://github.com/wyleung/pySVtools.git#egg=pysvtools
 
 # Dependencies
 
@@ -26,12 +26,19 @@ Installation of the dependencies is done if the installation is done using `easy
 For `DEL` and `INS` events, you can intersect 2 or more `VCF`-files using the following command:
 
     mergevcf -f 100 -i sample1.vcf sample2.vcf \
-                    -o intersected.tsv -b intersected.bed > intersected.vcf
+                    -o intersected.tsv -b intersected.bed -v intersected.vcf
 
 The resulting `tsv` file is a matrix listing the:
 
  - Intersected hits, with both breakpoints (5' and 3'), coverage (DP) and size.
  - Hit `location` in each sample, and size of the event
+
+# Intersecting TRA/ CTX events
+
+In order to merge translocations, one should set the flanking margin to a higher number.
+Recommended setting is to try out with `-t -f 2000` first, this will give some confident calls.
+One can allow more flanking by increasing the `-f` value. F.e.g.: `-t -f 5000` to allow 5kb difference in the centerpoint.
+
 
 
 
