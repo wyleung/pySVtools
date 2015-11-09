@@ -74,7 +74,10 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
     svDB = collections.OrderedDict()
     skipped_events = 0
     for rec in vcf_reader:
-        SVTYPE = rec.INFO['SVTYPE'][0]
+        if type(rec.INFO['SVTYPE']) == type([]):
+            SVTYPE = rec.INFO['SVTYPE'][0]
+        else:
+            SVTYPE = rec.INFO['SVTYPE']
 
         if transonly and SVTYPE not in ['CTX', 'TRA']:
             continue
@@ -107,28 +110,46 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
         elif SVTYPE in ['CTX', 'TRA']:
             # interchromosomal events
             # check chromosome B:
-            try:
-                chrB, chrBpos = extractTXmate(str(rec.ALT.pop()))
-            except:
-                # this is only valid for the old YAMSVC output
-                chrB, chrBpos = extractTXmateINFOFIELD(rec.INFO.get('BREAKPOINTS', []))
+
+            # delly specific records
+            if SVTYPE == 'TRA':
+                chrB = rec.INFO['CHR2']
+                chrBpos = rec.INFO['END']
 
                 t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
                           sv_type='CTX',
                           cp_flank=centerpointFlanking,
                           dp=getDP(rec))
-            else:
-                t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
-                          sv_type='CTX',
-                          cp_flank=centerpointFlanking,
-                          dp=getDP(rec))
-            finally:
                 try:
                     svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
                 except:
                     pass
                 else:
                     svDB[t.virtualChr].append(t)
+
+            else:
+                try:
+                    chrB, chrBpos = extractTXmate(str(rec.ALT.pop()))
+                except:
+                    # this is only valid for the old YAMSVC output
+                    chrB, chrBpos = extractTXmateINFOFIELD(rec.INFO.get('BREAKPOINTS', []))
+
+                    t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
+                              sv_type='CTX',
+                              cp_flank=centerpointFlanking,
+                              dp=getDP(rec))
+                else:
+                    t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
+                              sv_type='CTX',
+                              cp_flank=centerpointFlanking,
+                              dp=getDP(rec))
+                finally:
+                    try:
+                        svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
+                    except:
+                        pass
+                    else:
+                        svDB[t.virtualChr].append(t)
         elif SVTYPE == 'DEL':
             try:
                 if "SVEND" in rec.INFO.keys():
