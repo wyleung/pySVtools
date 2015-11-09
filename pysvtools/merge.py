@@ -76,7 +76,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
     for rec in vcf_reader:
         SVTYPE = rec.INFO['SVTYPE'][0]
 
-        if transonly and SVTYPE != 'CTX':
+        if transonly and SVTYPE not in ['CTX', 'TRA']:
             continue
 
         skip = True in list(filter((lambda y: y == True), list(map((lambda x: x.overlaps(rec.CHROM, rec.POS)), edb))))
@@ -104,7 +104,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                           dp=getDP(rec))
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
                 svDB[t.virtualChr].append(t)
-        elif SVTYPE == 'CTX':
+        elif SVTYPE in ['CTX', 'TRA']:
             # interchromosomal events
             # check chromosome B:
             try:

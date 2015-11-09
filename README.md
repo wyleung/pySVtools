@@ -38,13 +38,14 @@ The resulting `tsv` file is a matrix listing the:
 # Help
 
 ```bash
-usage: merge.py [-h] [-c CENTROMERS] [-f FLANKING] [-t] [-i VCF [VCF ...]]
-                [-o OUTPUT] [-b BEDOUTPUT]
+usage: merge.py [-h] [-c EXCLUSION_REGIONS] [-f FLANKING] [-t]
+                [-i VCF [VCF ...]] [-o OUTPUT] [-b BEDOUTPUT] [-v VCFOUTPUT]
+                [-r REGIONS_OUT]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c CENTROMERS, --centromers CENTROMERS
-                        Centromers definitions file in BED format
+  -c EXCLUSION_REGIONS, --exclusion_regions EXCLUSION_REGIONS
+                        Exclusion regions file in BED format
   -f FLANKING, --flanking FLANKING
                         Centerpoint flanking [100]
   -t, --translocation_only
@@ -55,6 +56,10 @@ optional arguments:
                         Output summary to [sample.tsv]
   -b BEDOUTPUT, --bedoutput BEDOUTPUT
                         Output bed file to [sample.bed]
+  -v VCFOUTPUT, --vcfoutput VCFOUTPUT
+                        Output summary to [sample.vcf]
+  -r REGIONS_OUT, --regions_out REGIONS_OUT
+                        Output all regions to [regions_out.bed]
 ```
 
 
