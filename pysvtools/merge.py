@@ -14,7 +14,6 @@ import datetime
 import itertools
 import logging
 import os
-import pprint
 import sys
 import re
 
@@ -27,8 +26,10 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from genomic_regions import ExclusionRegion, buildExclusion
+from genomic_regions import buildExclusion
 from models import *
+import pysvtools
+
 # read all samples in memory
 
 def extractTXmate(alt):
@@ -202,14 +203,15 @@ def vcfHeader():
     TS_NOW = datetime.datetime.now()
     VCF_HEADER = """##fileformat=VCFv4.1
 ##fileDate={filedate}
-##source=yamsvp-transmerge
+##source=pysvtools-{version}
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=TS_NOW.strftime("%Y%m%d"))
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=TS_NOW.strftime("%Y%m%d"),
+                                                                          version=".".join(pysvtools.__version__))
     return VCF_HEADER + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
 
 

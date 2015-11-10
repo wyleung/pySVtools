@@ -23,10 +23,10 @@ Licensed under the MIT license, see the LICENSE file.
 
 RELEASE = False
 
-__version_info__ = ('0', '1', '2')
+__version_info__ = ('0', '1', '3')
 
 
-__version__ = '.'.join(__version_info__)
+__version__ = '.'.join(__version_info__) + (RELEASE and True) and "" or "-beta"
 __author__ = 'LUMC, Wai Yi Leung'
 __contact__ = 'w.y.leung@lumc.nl'
 __homepage__ = 'https://github.com/wyleung/pySVtools'
