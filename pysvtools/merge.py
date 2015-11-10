@@ -15,7 +15,6 @@ import itertools
 import logging
 import os
 import sys
-import re
 
 try:
     import vcf
@@ -26,51 +25,13 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from genomic_regions import buildExclusion
+from __init__ import __version__
 from models import *
-import pysvtools
+from utils import extractTXmate, extractTXmateINFOFIELD, getDP
+from genomic_regions import build_exclusion
+
 
 # read all samples in memory
-
-def extractTXmate(alt):
-    try:
-        return re.findall(r"([\d\w\_]+)\:([\d]+)", alt, re.I | re.M)[0]
-    except:
-        raise IndexError
-
-
-def extractTXmateINFOFIELD(breakpoints):
-    if breakpoints == []:
-        return ("0", 1)
-    if type(breakpoints) == type(list()):
-        try:
-            breakpoints = breakpoints[1]
-        except:
-            print(breakpoints)
-
-    breakpoints = breakpoints.replace('"', '')
-    try:
-        return re.findall(r"([\d\w\_]+)\:([\d]+)", breakpoints, re.I | re.M)[0]
-    except:
-        raise IndexError
-
-
-def getDP(vcf_record):
-    if 'DP' in vcf_record.INFO.keys():
-        if type(vcf_record.INFO['DP']) == type(list):
-            return vcf_record.INFO['DP'][0]
-        return vcf_record.INFO['DP']
-    elif len(vcf_record.samples):
-        return getattr(vcf_record.samples[0].data, 'DP', 0)
-    return 0
-
-
-def firstFromList(arr):
-    if type(arr) == type([]):
-        return arr[0]
-    return arr
-
-
 def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
     svDB = collections.OrderedDict()
     skipped_events = 0
@@ -211,7 +172,7 @@ def vcfHeader():
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=TS_NOW.strftime("%Y%m%d"),
-                                                                          version=".".join(pysvtools.__version__))
+                                                                          version=".".join(__version__))
     return VCF_HEADER + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
 
 
@@ -231,7 +192,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     if type(exclusion_regions) != type([]):
         exclusion_regions = []
     for exclusion_region in exclusion_regions:
-        edb += buildExclusion(exclusion_region)
+        edb += build_exclusion(exclusion_region)
 
     for s in samplelist:
         logger.info('Reading SV-events from sample: {} '.format(s))
@@ -296,7 +257,6 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                         break
             logger.debug("Common hits so far in {}: {} / {} vs {}".format(_chromosome, _match, s1_n_calls, s2_n_calls))
 
-
     # vcf header
     print(vcfHeader(), file=vcf_output_file)
 
@@ -342,7 +302,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                 FORMATFIELDS = ":".join(map(str, [
                     '1/.',
                     t.dp])
-                )
+                                        )
                 print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tGT:DP\t{}".format(
                     t.chrA,
                     t.chrApos,
@@ -409,11 +369,6 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
 
     structural_events.close()
     regions_out_file.close()
-
-class Intersection(object):
-    def __init__(self):
-        pass
-
 
 
 def main():
