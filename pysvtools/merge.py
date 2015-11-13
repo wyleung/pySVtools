@@ -3,14 +3,13 @@
 from __future__ import print_function
 
 __desc__ = """
-    SV events merging
-    Takes VCF files as input.
+    Merging procedure for Structural Variation events.
+    Follows the idea of centerpoint matching to allow flexible match vs. reciprocal overlap.
 """
 __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 
 import argparse
 import collections
-import datetime
 import itertools
 import logging
 import os
@@ -25,24 +24,28 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from __init__ import __version__
 from models import *
-from utils import extractTXmate, extractTXmateINFOFIELD, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
-    formatVCFRecord
+from utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
+    formatVCFRecord, vcfHeader
 from genomic_regions import build_exclusion
 
 
 # read all samples in memory
 def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
+    """
+        Loading VCF records and transform them to `Event`
+    """
     svDB = collections.OrderedDict()
     skipped_events = 0
+
     for record in vcf_reader:
         SVTYPE = getSVType(record)
 
         if transonly and SVTYPE not in ['CTX', 'TRA']:
             continue
 
-        skip = True in list(filter((lambda y: y == True), list(map((lambda x: x.overlaps(record.CHROM, record.POS)), edb))))
+        skip = True in list(
+            filter((lambda y: y == True), list(map((lambda x: x.overlaps(record.CHROM, record.POS)), edb))))
         if skip:
             skipped_events += 1
             continue
@@ -125,24 +128,6 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
     return svDB
 
 
-def vcfHeader():
-    # print the VCF header
-    TS_NOW = datetime.datetime.now()
-    VCF_HEADER = """##fileformat=VCFv4.1
-##fileDate={filedate}
-##source=pysvtools-{version}
-##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
-##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
-##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=TS_NOW.strftime("%Y%m%d"),
-                                                                          version=".".join(__version__))
-    return VCF_HEADER + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
-
-
-# main functions
 def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, bedoutput, transonly=False,
                regions_out="regions_out.bed", vcf_output="output.vcf"):
     regions_out_file = open(regions_out, "w")

@@ -1,4 +1,9 @@
+#!/usr/bin/env python2
+
+import datetime
 import re
+
+from __init__ import __version__
 
 
 class Intersection(object):
@@ -27,6 +32,22 @@ def extractTXmate(record):
         chrBpos = res[1]
 
     return [chrB, chrBpos]
+
+
+def vcfHeader():
+    ts_now = datetime.datetime.now()
+    vcf_header = """##fileformat=VCFv4.1
+##fileDate={filedate}
+##source=pysvtools-{version}
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=ts_now.strftime("%Y%m%d"),
+                                                                          version=".".join(__version__))
+    return vcf_header + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
 
 
 def extractTXmateINFOFIELD(breakpoints):
