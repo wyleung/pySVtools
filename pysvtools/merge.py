@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 from __init__ import __version__
 from models import *
-from utils import extractTXmate, extractTXmateINFOFIELD, getDP
+from utils import extractTXmate, extractTXmateINFOFIELD, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
+    formatVCFRecord
 from genomic_regions import build_exclusion
 
 
@@ -35,95 +36,60 @@ from genomic_regions import build_exclusion
 def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
     svDB = collections.OrderedDict()
     skipped_events = 0
-    for rec in vcf_reader:
-        if type(rec.INFO['SVTYPE']) == type([]):
-            SVTYPE = rec.INFO['SVTYPE'][0]
-        else:
-            SVTYPE = rec.INFO['SVTYPE']
+    for record in vcf_reader:
+        SVTYPE = getSVType(record)
 
         if transonly and SVTYPE not in ['CTX', 'TRA']:
             continue
 
-        skip = True in list(filter((lambda y: y == True), list(map((lambda x: x.overlaps(rec.CHROM, rec.POS)), edb))))
+        skip = True in list(filter((lambda y: y == True), list(map((lambda x: x.overlaps(record.CHROM, record.POS)), edb))))
         if skip:
             skipped_events += 1
             continue
 
-        SVLEN = 0
-        if "SVLEN" in rec.INFO.keys():
-            if type(rec.INFO['SVLEN']) == type([]):
-                SVLEN = rec.INFO['SVLEN'][0]
-            elif type(rec.INFO['SVLEN']) == type(0):
-                SVLEN = rec.INFO['SVLEN']
+        SVLEN = getSVLEN(record)
 
         if SVTYPE == 'bITX':
             # intrachromosomal events
             try:
-                end = rec.INFO['SVEND'][0]
+                end = record.INFO['SVEND'][0]
             except:
-                end = rec.INFO['BREAKPOINTS'][0].replace('"', '').split('-')[1]
+                end = record.INFO['BREAKPOINTS'][0].replace('"', '').split('-')[1]
             finally:
-                t = Event(rec.CHROM, rec.POS, rec.CHROM,
+                t = Event(record.CHROM, record.POS, record.CHROM,
                           end, sv_type='ITX',
                           cp_flank=centerpointFlanking,
-                          dp=getDP(rec))
+                          dp=extractDPFromRecord(record))
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
                 svDB[t.virtualChr].append(t)
         elif SVTYPE in ['CTX', 'TRA']:
             # interchromosomal events
             # check chromosome B:
+            chrB, chrBpos = extractTXmate(record)
 
-            # delly specific records
-            if SVTYPE == 'TRA':
-                chrB = rec.INFO['CHR2']
-                chrBpos = rec.INFO['END']
-
-                t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
-                          sv_type='CTX',
-                          cp_flank=centerpointFlanking,
-                          dp=getDP(rec))
-                try:
-                    svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
-                except:
-                    pass
-                else:
-                    svDB[t.virtualChr].append(t)
-
+            t = Event(record.CHROM, record.POS, chrB, chrBpos,
+                      sv_type='CTX',
+                      cp_flank=centerpointFlanking,
+                      dp=extractDPFromRecord(record))
+            try:
+                svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
+            except:
+                pass
             else:
-                try:
-                    chrB, chrBpos = extractTXmate(str(rec.ALT.pop()))
-                except:
-                    # this is only valid for the old YAMSVC output
-                    chrB, chrBpos = extractTXmateINFOFIELD(rec.INFO.get('BREAKPOINTS', []))
+                svDB[t.virtualChr].append(t)
 
-                    t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
-                              sv_type='CTX',
-                              cp_flank=centerpointFlanking,
-                              dp=getDP(rec))
-                else:
-                    t = Event(rec.CHROM, rec.POS, chrB, chrBpos,
-                              sv_type='CTX',
-                              cp_flank=centerpointFlanking,
-                              dp=getDP(rec))
-                finally:
-                    try:
-                        svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
-                    except:
-                        pass
-                    else:
-                        svDB[t.virtualChr].append(t)
         elif SVTYPE == 'DEL':
             try:
-                if "SVEND" in rec.INFO.keys():
-                    end = rec.INFO['SVEND'][0]
-                elif "END" in rec.INFO.keys():
-                    end = rec.INFO['END'][0]
-                elif "SVLEN" in rec.INFO.keys():
-                    end = rec.POS + abs(SVLEN)
-                t = Event(rec.CHROM, rec.POS, rec.CHROM, end,
-                          sv_type=rec.INFO['SVTYPE'][0],
+                if "SVEND" in record.INFO.keys():
+                    end = record.INFO['SVEND'][0]
+                elif "END" in record.INFO.keys():
+                    end = record.INFO['END'][0]
+                elif "SVLEN" in record.INFO.keys():
+                    end = record.POS + abs(SVLEN)
+                t = Event(record.CHROM, record.POS, record.CHROM, end,
+                          sv_type=record.INFO['SVTYPE'][0],
                           cp_flank=centerpointFlanking,
-                          dp=getDP(rec))
+                          dp=extractDPFromRecord(record))
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 raise
@@ -133,22 +99,22 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
         else:
             # all other events not covered in this analysis, we only check the overlap
             try:
-                if "SVEND" in rec.INFO.keys():
-                    if type(rec.INFO['SVEND']) == type([]):
-                        end = rec.INFO['SVEND'][0]
+                if "SVEND" in record.INFO.keys():
+                    if type(record.INFO['SVEND']) == type([]):
+                        end = record.INFO['SVEND'][0]
                     else:
-                        end = rec.INFO['SVEND']
-                elif "END" in rec.INFO.keys():
-                    if type(rec.INFO['END']) == type([]):
-                        end = rec.INFO['END'][0]
+                        end = record.INFO['SVEND']
+                elif "END" in record.INFO.keys():
+                    if type(record.INFO['END']) == type([]):
+                        end = record.INFO['END'][0]
                     else:
-                        end = rec.INFO['END']
-                elif "SVLEN" in rec.INFO.keys():
-                    end = rec.POS + abs(SVLEN)
-                t = Event(rec.CHROM, rec.POS, rec.CHROM, end,
-                          sv_type=rec.INFO['SVTYPE'][0],
+                        end = record.INFO['END']
+                elif "SVLEN" in record.INFO.keys():
+                    end = record.POS + abs(SVLEN)
+                t = Event(record.CHROM, record.POS, record.CHROM, end,
+                          sv_type=record.INFO['SVTYPE'][0],
                           cp_flank=centerpointFlanking,
-                          dp=getDP(rec))
+                          dp=extractDPFromRecord(record))
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 raise
@@ -264,8 +230,8 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x)), samplelist))
     header_line = "\t".join(['ChrA', 'ChrApos', 'ChrB', 'ChrBpos', 'SVTYPE', 'DP', 'Size', samplecols])
 
-    structural_events = open(output_file, 'w')
-    structural_events.write("{}\n".format(header_line))
+    tsv_report_output = open(output_file, 'w')
+    tsv_report_output.write("{}\n".format(header_line))
 
     bed_structural_events = open(bedoutput, 'w')
 
@@ -280,11 +246,11 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
             if len(items):
                 # check which samples has the same
                 locations_found = []
-                for s in samplelist:
-                    if s in items.keys():
-                        locations_found.append("{}\t{}".format(items[s], items[s].size))
+                for sample in samplelist:
+                    if sample in items.keys():
+                        locations_found.append("{}\t{}".format(items[sample], items[sample].size))
                         # track all locations found for later intersecting or complementing the set of found/not-found
-                        all_locations.append(items[s])
+                        all_locations.append(items[sample])
                     else:
                         locations_found.append("\t")
                 # get the key with the highest DP
@@ -292,31 +258,9 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                 fKey = sorted_by_dp[0][0]
                 t = items[fKey]
 
-                # write the new vcf record on the commandline
-                # TODO: write the DP for each of the callers/sample
+                print(formatVCFRecord(t), file=vcf_output_file)
 
-                INFOFIELDS = "IMPRECISE;SVTYPE={};END={}".format(
-                    t.sv_type,
-                    t.chrBpos
-                )
-                FORMATFIELDS = ":".join(map(str, [
-                    '1/.',
-                    t.dp])
-                                        )
-                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tGT:DP\t{}".format(
-                    t.chrA,
-                    t.chrApos,
-                    '.',
-                    '.',
-                    t.vcf_alt,
-                    '100',
-                    'PASS',
-                    INFOFIELDS,
-                    FORMATFIELDS
-                ), file=vcf_output_file
-                )
-
-                structural_events.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
+                tsv_report_output.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
                     t.chrA,
                     t.chrApos,
                     t.chrB,
@@ -325,49 +269,12 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                     t.dp,
                     t.size,
                     "\t".join(locations_found)))
-                if t.sv_type in ["INS", 'DEL', 'ITX']:
-                    bed_structural_events.write("{chrom}\t{start}\t{end}\t{annot}\n".format(
-                        chrom=t.chrA,
-                        start=t.chrApos,
-                        end=t.chrBpos,
-                        annot="SVTYPE={svtype};DP={dp};SIZE={size}".format(
-                            svtype=t.sv_type,
-                            dp=t.dp,
-                            size=t.size
-                        )
-                    ))
-                else:
-                    # for CTX events, we write 2 tracks, one for the left breakpoint and one for th right breakpoint
-                    # both sites are flanked with 50 bases to generate a valid bed file and used in IGV to mark the region
-                    bed_structural_events.write("{chrom}\t{start}\t{end}\t{annot}\n".format(
-                        chrom=t.chrA,
-                        start=t.chrApos - 50,
-                        end=t.chrApos + 50,
-                        annot="SVTYPE={svtype};DP={dp};SIZE={size};MATE={chrb}:{chrbpos}".format(
-                            svtype=t.sv_type,
-                            dp=t.dp,
-                            size=t.size,
-                            chrb=t.chrB,
-                            chrbpos=t.chrBpos
-                        )
-                    ))
-                    bed_structural_events.write("{chrom}\t{start}\t{end}\t{annot}\n".format(
-                        chrom=t.chrB,
-                        start=t.chrBpos - 50,
-                        end=t.chrBpos + 50,
-                        annot="SVTYPE={svtype};DP={dp};SIZE={size};MATE={chrb}:{chrbpos}".format(
-                            svtype=t.sv_type,
-                            dp=t.dp,
-                            size=t.size,
-                            chrb=t.chrA,
-                            chrbpos=t.chrApos
-                        )
-                    ))
+                bed_structural_events.write(formatBedTrack(t))
 
     for loc in all_locations:
         print(loc.bedRow, file=regions_out_file)
 
-    structural_events.close()
+    tsv_report_output.close()
     regions_out_file.close()
 
 
