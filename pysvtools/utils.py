@@ -4,11 +4,7 @@ import datetime
 import re
 
 from __init__ import __version__
-
-
-class Intersection(object):
-    def __init__(self):
-        pass
+from models.exclusionregion import ExclusionRegion
 
 
 def extractTXmate(record):
@@ -105,13 +101,13 @@ def formatBedTrack(mergedHit):
 
     if mergedHit.sv_type in ["INS", 'DEL', 'ITX']:
         formatted_bed = "{chrom}\t{start}\t{end}\t{annot}\n".format(
-            chrom=t.chrA,
-            start=t.chrApos,
-            end=t.chrBpos,
+            chrom=mergedHit.chrA,
+            start=mergedHit.chrApos,
+            end=mergedHit.chrBpos,
             annot="SVTYPE={svtype};DP={dp};SIZE={size}".format(
-                svtype=t.sv_type,
-                dp=t.dp,
-                size=t.size
+                svtype=mergedHit.sv_type,
+                dp=mergedHit.dp,
+                size=mergedHit.size
             )
         )
     else:
@@ -165,3 +161,14 @@ def formatVCFRecord(mergedHit):
         FORMATFIELDS
     )
     return formattedVCFRecord
+
+
+def build_exclusion(bed_exclude=None):
+    exclusiondb= []
+    with open(bed_exclude, 'r') as fd:
+        for r in fd:
+            row = r.strip().split("\t")
+            cols = dict(zip(['chromosome', 'start', 'end', 'band', 'color'], row))
+            exclusion = ExclusionRegion(**cols)
+            exclusiondb.append(exclusion)
+    return exclusiondb

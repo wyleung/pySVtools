@@ -20,12 +20,3 @@ class ExclusionRegion(object):
         return "<ExclusionRegion {}:{}-{}>".format(self.chromosome, self.start, self.end)
 
 
-def build_exclusion(bed_exclude=None):
-    exclusiondb= []
-    with open(bed_exclude, 'r') as fd:
-        for r in fd:
-            row = r.strip().split("\t")
-            cols = dict(zip(['chromosome', 'start', 'end', 'band', 'color'], row))
-            exclusion = ExclusionRegion(**cols)
-            exclusiondb.append(exclusion)
-    return exclusiondb

@@ -24,10 +24,26 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from models import *
+from models import Event, ExclusionRegion
 from utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
-    formatVCFRecord, vcfHeader
-from genomic_regions import build_exclusion
+    formatVCFRecord, vcfHeader, build_exclusion
+
+
+class VCFEventLoader(object):
+    """
+        Load VCF File and transform VCF record into an `Event`
+    """
+    def __init__(self):
+        pass
+
+class SVMerger(object):
+    def __init__(self):
+        pass
+
+class ReportExport(object):
+    def __init__(self):
+        pass
+
 
 
 # read all samples in memory
