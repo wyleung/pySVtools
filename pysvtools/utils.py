@@ -3,6 +3,7 @@
 import datetime
 import re
 
+import vcf.model
 from pysvtools import __version__
 from pysvtools.models.exclusionregion import ExclusionRegion
 
@@ -14,22 +15,20 @@ def extractTXmate(record):
     """
     chrB = None
     chrBpos = None
+
     # first check in record.alt
     try:
-        alt = record.alt.pop()
+        alt = record.ALT.pop()
     except:
         alt = ""
 
-    try:
-        res = re.findall(r"([\d\w\_]+)\:([\d]+)", alt, re.I | re.M)[0]
-    except:
+    if type(alt) == vcf.model._SV:
         # try to extract from `record.INFO` on the keys: [CHR2, END]
         chrB = record.INFO.get('CHR2', None)
-        chrBpos = record.INFO.get('END', None)
-    else:
-        chrB = res[0]
-        chrBpos = res[1]
-
+        chrBpos = record.sv_end
+    elif type(alt) == vcf.model._Breakend:
+        chrB = alt.chr
+        chrBpos = alt.pos
     return [chrB, chrBpos]
 
 
@@ -38,14 +37,41 @@ def vcfHeader():
     vcf_header = """##fileformat=VCFv4.1
 ##fileDate={filedate}
 ##source=pysvtools-{version}
-##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
-##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
-##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of variation">
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DUP,Description="Duplication">
+##ALT=<ID=INS,Description="Insertion">
+##ALT=<ID=INV,Description="Inversion">
+##ALT=<ID=TRA,Description="Translocation">
+##FILTER=<ID=LowQual,Description="PE support below 3 or mapping quality below 20.">
+##FORMAT=<ID=DR,Number=1,Type=Integer,Description="# high-quality reference pairs">
+##FORMAT=<ID=DV,Number=1,Type=Integer,Description="# high-quality variant pairs">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Per-sample genotype filter">
+##FORMAT=<ID=GL,Number=G,Type=Float,Description="Log10-scaled genotype likelihoods for RR,RA,AA genotypes">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">""".format(filedate=ts_now.strftime("%Y%m%d"),
-                                                                          version=".".join(__version__))
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Normalized high-quality read count for the SV">
+##FORMAT=<ID=RR,Number=1,Type=Integer,Description="# high-quality reference junction reads">
+##FORMAT=<ID=RV,Number=1,Type=Integer,Description="# high-quality variant junction reads">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##INFO=<ID=CHR2,Number=1,Type=String,Description="Chromosome for END coordinate in case of a translocation">
+##INFO=<ID=CIEND,Number=2,Type=Integer,Description="PE confidence interval around END">
+##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="PE confidence interval around POS">
+##INFO=<ID=CONSENSUS,Number=1,Type=String,Description="Split-read consensus sequence">
+##INFO=<ID=CT,Number=1,Type=String,Description="Paired-end signature induced connection type">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the structural variant">
+##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+##INFO=<ID=MAPQ,Number=1,Type=Integer,Description="Median mapping quality of paired-ends">
+##INFO=<ID=PE,Number=1,Type=Integer,Description="Paired-end support of the structural variant">
+##INFO=<ID=PRECISE,Number=0,Type=Flag,Description="Precise structural variation">
+##INFO=<ID=SR,Number=1,Type=Integer,Description="Split-read support">
+##INFO=<ID=SRQ,Number=1,Type=Float,Description="Split-read consensus alignment quality">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of the SV">
+##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">""".format(filedate=ts_now.strftime("%Y%m%d"),
+                                                                          version=__version__)
     return vcf_header + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
 
 
