@@ -245,7 +245,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     all_locations = []
 
     for virtualChr in natsorted(commonhits.keys()):
-        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].chrApos):
+        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].items()[1].chrApos):
             if len(items):
                 # check which samples has the same
                 locations_found = []
