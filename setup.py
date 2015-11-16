@@ -25,7 +25,7 @@ setup(
     url=distmeta.__homepage__,
     license='MIT License',
     platforms=['any'],
-    packages=['pysvtools'],
+    packages=['pysvtools', 'pysvtools.models'],
     install_requires=requires,
     entry_points = {
         'console_scripts': [
