@@ -100,13 +100,19 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
         elif SVTYPE == 'DEL':
             try:
                 if "SVEND" in record.INFO.keys():
-                    end = record.INFO['SVEND'][0]
+                    if type(record.INFO['SVEND']) == type([]):
+                        end = record.INFO['SVEND'][0]
+                    else:
+                        end = record.INFO['SVEND']
                 elif "END" in record.INFO.keys():
-                    end = record.INFO['END']
+                    if type(record.INFO['END']) == type([]):
+                        end = record.INFO['END'][0]
+                    else:
+                        end = record.INFO['END']
                 elif "SVLEN" in record.INFO.keys():
                     end = record.POS + abs(SVLEN)
                 t = Event(record.CHROM, record.POS, record.CHROM, end,
-                          sv_type=record.INFO['SVTYPE'][0],
+                          sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
                           dp=extractDPFromRecord(record))
             except:
@@ -131,7 +137,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                 elif "SVLEN" in record.INFO.keys():
                     end = record.POS + abs(SVLEN)
                 t = Event(record.CHROM, record.POS, record.CHROM, end,
-                          sv_type=record.INFO['SVTYPE'][0],
+                          sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
                           dp=extractDPFromRecord(record))
             except:
