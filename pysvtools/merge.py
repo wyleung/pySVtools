@@ -11,6 +11,7 @@ __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 import argparse
 import collections
 import itertools
+from natsort import natsorted
 import logging
 import os
 import sys
@@ -241,15 +242,10 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     tsv_report_output.write("{}\n".format(header_line))
 
     bed_structural_events = open(bedoutput, 'w')
-
-    # the keys contain the virtual chromosomes, we need sorted output!
-    commonhits_keys = commonhits.keys()
-    commonhits_keys.sort()
-
     all_locations = []
 
-    for virtualChr in commonhits_keys:
-        for s, items in commonhits[virtualChr].items():
+    for virtualChr in natsorted(commonhits.keys()):
+        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].chrApos):
             if len(items):
                 # check which samples has the same
                 locations_found = []
@@ -261,7 +257,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                     else:
                         locations_found.append("\t")
                 # get the key with the highest DP
-                sorted_by_dp = sorted(items.items(), key=lambda t: t[1].dp, reverse=True)
+                sorted_by_dp = sorted(items.items(), key=lambda hit: hit[1].dp, reverse=True)
                 fKey = sorted_by_dp[0][0]
                 t = items[fKey]
 
