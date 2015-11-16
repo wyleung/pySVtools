@@ -10,7 +10,7 @@ __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 class Event(object):
     centerpoint_flanking = 100
 
-    def __init__(self, chrA, chrApos, chrB, chrBpos, sv_type=None, cp_flank=None, dp=0):
+    def __init__(self, chrA, chrApos, chrB, chrBpos, sv_type=None, cp_flank=None, dp=0, svmethod=""):
         (self.chrA, self.chrApos), (self.chrB, self.chrBpos) = sorted([(chrA, chrApos), (chrB, chrBpos)])
 
         self.chrApos = int(self.chrApos)
@@ -18,6 +18,8 @@ class Event(object):
 
         self.seen = False
         self.matched_in = None
+
+        self.svmethod = svmethod
 
         # number of reads supporting this breakpoint
         self.support = 0

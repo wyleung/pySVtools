@@ -154,7 +154,7 @@ def formatBedTrack(mergedHit):
                 chrbpos=mergedHit.chrBpos
             )
         )
-        formatted_bed += "\n{chrom}\t{start}\t{end}\t{annot}\n".format(
+        formatted_bed += "{chrom}\t{start}\t{end}\t{annot}\n".format(
             chrom=mergedHit.chrB,
             start=mergedHit.chrBpos - 50,
             end=mergedHit.chrBpos + 50,
@@ -171,23 +171,26 @@ def formatBedTrack(mergedHit):
 
 def formatVCFRecord(mergedHit):
     # TODO: write the DP for each of the callers/sample
-    INFOFIELDS = "IMPRECISE;SVTYPE={};END={}".format(
+    INFOFIELDS = "IMPRECISE;SVTYPE={};CHR2={};END={};SVMETHOD={svmethod}".format(
         mergedHit.sv_type,
-        mergedHit.chrBpos
+        mergedHit.chrB,
+        mergedHit.chrBpos,
+        svmethod=mergedHit.svmethod
     )
     FORMATFIELDS = ":".join(map(str, [
         '1/.',
         mergedHit.dp]))
-    formattedVCFRecord = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tGT:DP\t{}".format(
-        mergedHit.chrA,
-        mergedHit.chrApos,
-        '.',
-        '.',
-        mergedHit.vcf_alt,
-        '100',
-        'PASS',
-        INFOFIELDS,
-        FORMATFIELDS
+
+    formattedVCFRecord = "{chrA}\t{pos}\t{id}\t{ref}\t<{alt}>\t{qual}\t{filter}\t{info}\tGT:DP\t{format}".format(
+        chrA=mergedHit.chrA,
+        pos=mergedHit.chrApos,
+        id='.',
+        ref='N',
+        alt=mergedHit.sv_type,
+        qual='100',
+        filter='PASS',
+        info=INFOFIELDS,
+        format=FORMATFIELDS
     )
     return formattedVCFRecord
 

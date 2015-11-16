@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import pprint
+
 __desc__ = """
     Merging procedure for Structural Variation events.
     Follows the idea of centerpoint matching to allow flexible match vs. reciprocal overlap.
@@ -34,21 +36,23 @@ class VCFEventLoader(object):
     """
         Load VCF File and transform VCF record into an `Event`
     """
+
     def __init__(self):
         pass
+
 
 class SVMerger(object):
     def __init__(self):
         pass
+
 
 class ReportExport(object):
     def __init__(self):
         pass
 
 
-
 # read all samples in memory
-def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
+def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmethod=""):
     """
         Loading VCF records and transform them to `Event`
     """
@@ -77,9 +81,10 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                 end = record.INFO['BREAKPOINTS'][0].replace('"', '').split('-')[1]
             finally:
                 t = Event(record.CHROM, record.POS, record.CHROM,
-                          end, sv_type='ITX',
+                          end, sv_type="TRA",
                           cp_flank=centerpointFlanking,
-                          dp=extractDPFromRecord(record))
+                          dp=extractDPFromRecord(record),
+                          svmethod=svmethod)
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
                 svDB[t.virtualChr].append(t)
         elif SVTYPE in ['CTX', 'TRA']:
@@ -88,9 +93,10 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
             chrB, chrBpos = extractTXmate(record)
 
             t = Event(record.CHROM, record.POS, chrB, chrBpos,
-                      sv_type='CTX',
+                      sv_type='TRA',
                       cp_flank=centerpointFlanking,
-                      dp=extractDPFromRecord(record))
+                      dp=extractDPFromRecord(record),
+                      svmethod=svmethod)
             try:
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
             except:
@@ -115,7 +121,8 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                 t = Event(record.CHROM, record.POS, record.CHROM, end,
                           sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
-                          dp=extractDPFromRecord(record))
+                          dp=extractDPFromRecord(record),
+                          svmethod=svmethod)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 raise
@@ -140,7 +147,8 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                 t = Event(record.CHROM, record.POS, record.CHROM, end,
                           sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
-                          dp=extractDPFromRecord(record))
+                          dp=extractDPFromRecord(record),
+                          svmethod=svmethod)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 raise
@@ -171,7 +179,11 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     for s in samplelist:
         logger.info('Reading SV-events from sample: {} '.format(s))
         sampleDB[s] = vcf.Reader(open(s, 'r'))
-        svDB[s] = loadEventFromVCF(s, sampleDB[s], edb, centerpointFlanking, transonly)
+
+        # extract SV caller from header
+        sv_caller = sampleDB[s].metadata.get('source', [os.path.basename(s).strip('.vcf')]).pop(0).split(' ').pop(0)
+
+        svDB[s] = loadEventFromVCF(s, sampleDB[s], edb, centerpointFlanking, transonly, sv_caller)
         n_events = sum([len(calls) for chromlist, calls in svDB[s].items()])
         logger.info('Loaded SV-events from sample: {} '.format(n_events))
 
@@ -235,7 +247,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     print(vcfHeader(), file=vcf_output_file)
 
     # tsv file
-    samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x)), samplelist))
+    samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x).strip(".vcf")), samplelist))
     header_line = "\t".join(['ChrA', 'ChrApos', 'ChrB', 'ChrBpos', 'SVTYPE', 'DP', 'Size', samplecols])
 
     tsv_report_output = open(output_file, 'w')
@@ -245,7 +257,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     all_locations = []
 
     for virtualChr in natsorted(commonhits.keys()):
-        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].items()[1].chrApos):
+        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].items()[0][1].chrApos):
             if len(items):
                 # check which samples has the same
                 locations_found = []
