@@ -24,8 +24,8 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from .models import Event, ExclusionRegion
-from .utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
+from pysvtools.models import Event, ExclusionRegion
+from pysvtools.utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
     formatVCFRecord, vcfHeader, build_exclusion
 
 

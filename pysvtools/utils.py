@@ -3,8 +3,8 @@
 import datetime
 import re
 
-from __init__ import __version__
-from models.exclusionregion import ExclusionRegion
+from pysvtools import __version__
+from pysvtools.models.exclusionregion import ExclusionRegion
 
 
 def extractTXmate(record):
