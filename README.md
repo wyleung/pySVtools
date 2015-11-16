@@ -2,6 +2,8 @@
 
 A collection of usefull operations on VCF files containing structural variants calls.
 
+[![Build Status](https://travis-ci.org/wyleung/pySVtools.svg?branch=master)](https://travis-ci.org/wyleung/pySVtools)
+
 # Installation
 
     # Stable version
