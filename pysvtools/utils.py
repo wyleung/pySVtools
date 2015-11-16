@@ -15,7 +15,10 @@ def extractTXmate(record):
     chrB = None
     chrBpos = None
     # first check in record.alt
-    alt = record.alt.pop()
+    try:
+        alt = record.alt.pop()
+    except:
+        alt = ""
 
     try:
         res = re.findall(r"([\d\w\_]+)\:([\d]+)", alt, re.I | re.M)[0]

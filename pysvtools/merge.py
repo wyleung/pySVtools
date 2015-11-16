@@ -102,7 +102,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly):
                 if "SVEND" in record.INFO.keys():
                     end = record.INFO['SVEND'][0]
                 elif "END" in record.INFO.keys():
-                    end = record.INFO['END'][0]
+                    end = record.INFO['END']
                 elif "SVLEN" in record.INFO.keys():
                     end = record.POS + abs(SVLEN)
                 t = Event(record.CHROM, record.POS, record.CHROM, end,
