@@ -1,4 +1,5 @@
 language: python
+
 python:
   - "2.6"
   - "2.7"
@@ -8,10 +9,18 @@ python:
   - "3.5"
   - "3.5-dev" # 3.5 development branch
   - "nightly" # currently points to 3.6-dev
+
 # command to install dependencies
-install: "pip install -r requirements.txt"
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+
 # command to run tests
 script:
   - python setup.py build_ext -i
   - python -m compileall -f .
   - python setup.py test
+  - coverage run --source=pysvtools setup.py test
+
+after_success:
+  - coveralls
