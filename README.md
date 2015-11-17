@@ -2,10 +2,7 @@
 
 A collection of usefull operations on VCF files containing structural variants calls.
 
-[![PyPI](https://img.shields.io/pypi/v/pySVtools.svg)](https://pypi.python.org/pypi/pySVtools) [![PyPI](https://img.shields.io/pypi/wheel/pySVtools.svg)](https://pypi.python.org/pypi/pySVtools)
- 
- [![GitHub issues](https://img.shields.io/github/issues/wyleung/pySVtools.svg)](https://github.com/wyleung/pySVtools/issues) [![GitHub stars](https://img.shields.io/github/stars/wyleung/pySVtools.svg)](https://github.com/wyleung/pySVtools/stargazers)
- [![Coverage Status](https://coveralls.io/repos/wyleung/pySVtools/badge.svg?branch=master&service=github)](https://coveralls.io/github/wyleung/pySVtools?branch=master) [![Build Status](https://travis-ci.org/wyleung/pySVtools.svg?branch=master)](https://travis-ci.org/wyleung/pySVtools)
+[![PyPI](https://img.shields.io/pypi/v/pySVtools.svg)](https://pypi.python.org/pypi/pySVtools)  [![PyPI](https://img.shields.io/pypi/wheel/pySVtools.svg)](https://pypi.python.org/pypi/pySVtools)  [![GitHub issues](https://img.shields.io/github/issues/wyleung/pySVtools.svg)](https://github.com/wyleung/pySVtools/issues)  [![GitHub stars](https://img.shields.io/github/stars/wyleung/pySVtools.svg)](https://github.com/wyleung/pySVtools/stargazers)  [![Coverage Status](https://coveralls.io/repos/wyleung/pySVtools/badge.svg?branch=master&service=github)](https://coveralls.io/github/wyleung/pySVtools?branch=master)  [![Build Status](https://travis-ci.org/wyleung/pySVtools.svg?branch=master)](https://travis-ci.org/wyleung/pySVtools)
 
 # Installation
 
