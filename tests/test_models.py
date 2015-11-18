@@ -27,6 +27,85 @@ class TestModels(unittest2.TestCase):
         chrBpos = 5
         event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
 
+    def test_event_equal(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="DEL")
+        self.assertEqual(event, event)
+
+    def test_event_notequal(self):
+        chrA = "chr1"
+        chrB = "chr5"
+        chrApos = 1
+        chrBpos = 5
+        eventA = pysvtools.models.Event(chrA, chrApos, chrA, chrBpos, sv_type="DEL")
+        eventB = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="DEL")
+        self.assertNotEqual(eventA, eventB)
+
+    def test_event_vcfalt(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="DEL")
+        self.assertIsInstance(event.vcf_alt, string_types)
+        self.assertEqual(event.vcf_alt, ".")
+
+    def test_event_vcfalt_itx(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="ITX")
+        self.assertIsInstance(event.vcf_alt, string_types)
+        self.assertEqual(event.vcf_alt, "N[chr1:5[")
+
+    def test_event_hexdigest(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
+        self.assertIsInstance(event.hexdigest, string_types)
+
+    def test_event_reprstring(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
+        self.assertIsInstance(event.__repr__(), string_types)
+        self.assertIn(chrA, event.bedRow)
+        self.assertIn(chrApos.__str__(), event.bedRow)
+        self.assertIn(chrB, event.bedRow)
+        self.assertIn(chrBpos.__str__(), event.bedRow)
+
+    def test_event_string(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
+        self.assertIsInstance(event.__str__(), string_types)
+        self.assertIn(chrA, event.bedRow)
+        self.assertIn(chrApos.__str__(), event.bedRow)
+        self.assertIn(chrB, event.bedRow)
+        self.assertIn(chrBpos.__str__(), event.bedRow)
+
+    def test_event_bedrow(self):
+        chrA = "chr1"
+        chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
+        self.assertIsInstance(event.bedRow, string_types)
+        self.assertIn(chrA, event.bedRow)
+        self.assertIn(chrApos.__str__(), event.bedRow)
+        self.assertIn(chrB, event.bedRow)
+        self.assertIn(chrBpos.__str__(), event.bedRow)
+
     def test_exclusionregion_success(self):
         chrA = "chr1"
         chrApos = 1
@@ -37,7 +116,9 @@ class TestModels(unittest2.TestCase):
         self.assertEqual(exregion.start, chrApos)
         self.assertEqual(exregion.end, chrBpos)
 
-
+    def test_exclusionregion_reprstring(self):
+        exregionA = pysvtools.models.ExclusionRegion("chrA", 1, 10)
+        self.assertIsInstance(exregionA.__repr__(), string_types)
 
     def test_exclusionregion_overlap(self):
         exregionA = pysvtools.models.ExclusionRegion("chrA", 1, 10)
@@ -52,4 +133,3 @@ class TestModels(unittest2.TestCase):
         self.assertTrue(exregionA.overlaps("chrA", 1))
         self.assertTrue(exregionA.overlaps("chrA", 5))
         self.assertTrue(exregionA.overlaps("chrA", 10))
-

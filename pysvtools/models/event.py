@@ -81,13 +81,13 @@ class Event(object):
         # look for hypothesis first:
         # A l--------------r
         # B            l--------------r
-        if lftB < rgtA < rgtB:
+        if lftB <= rgtA <= rgtB:
             # we have a overlap
             #            print "A end to B start"
             return True
         # A            l--------------r
         # B l--------------r
-        if lftB < lftA < rgtB:
+        if lftB <= lftA <= rgtB:
             #            print "B end to A start"
             return True
 
@@ -97,15 +97,12 @@ class Event(object):
         # or
         # A     l----------r
         # B l--------------------r
-        if (lftB > lftA and rgtB < rgtA) or (lftB < lftA and rgtB > rgtA):
+        if (lftB >= lftA and rgtB <= rgtA) or (lftB <= lftA and rgtB >= rgtA):
             #            print "overlapping things"
             return True
 
         # say false for other not (yet) tested hypotheses
         return False
-
-    def naiveEQ(self, other):
-        pass
 
     @property
     def vcf_alt(self):

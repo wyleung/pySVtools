@@ -11,12 +11,5 @@ class ExclusionRegion(object):
         # simple check on chromosome
         return qChr == self.chromosome and self.start <= qPos <= self.end
 
-    def __eq__(self, other):
-        # a little bit different, abuse the eq function to see whether a region
-        # overlaps
-        pass
-
     def __repr__(self):
         return "<ExclusionRegion {}:{}-{}>".format(self.chromosome, self.start, self.end)
-
-
