@@ -2,8 +2,6 @@
 
 from __future__ import print_function
 
-import pprint
-
 __desc__ = """
     Merging procedure for Structural Variation events.
     Follows the idea of centerpoint matching to allow flexible match vs. reciprocal overlap.
@@ -27,7 +25,7 @@ except:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from pysvtools.models import Event, ExclusionRegion
+from pysvtools.models import Event
 from pysvtools.utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
     formatVCFRecord, vcfHeader, build_exclusion
 
