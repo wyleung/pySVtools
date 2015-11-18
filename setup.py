@@ -28,6 +28,7 @@ setup(
     platforms=['any'],
     packages=['pysvtools', 'pysvtools.models'],
     install_requires=requires,
+    test_suite='nose2.collector.collector',
     entry_points = {
         'console_scripts': [
             'mergevcf = pysvtools.merge:main'
