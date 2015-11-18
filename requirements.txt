@@ -1,5 +1,4 @@
 pip
 mkdocs
 natsort
-nose
 PyVCF==0.6.7
