@@ -5,8 +5,6 @@ import pysvtools
 
 
 class TestPackage(object):
-    def test_versionname_string(self):
-        assert isinstance(pysvtools.version("pysvtools"), string_types)
 
     def test_version_tupple(self):
         assert isinstance(pysvtools.__version_info__, tuple)

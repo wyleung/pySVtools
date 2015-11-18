@@ -31,10 +31,3 @@ __contact__ = 'w.y.leung@lumc.nl'
 __homepage__ = 'https://github.com/wyleung/pySVtools'
 
 usage = __doc__.split("\n\n\n")
-
-def docSplit(func):
-    return func.__doc__.split("\n\n")[0]
-
-def version(name):
-    return "%s version %s\n\nAuthor   : %s <%s>\nHomepage : %s" % (name,
-        __version__, __author__, __contact__, __homepage__)
