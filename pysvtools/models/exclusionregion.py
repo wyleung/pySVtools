@@ -12,7 +12,7 @@ class ExclusionRegion(object):
         return qChr == self.chromosome and self.start <= qPos <= self.end
 
     def __repr__(self):
-        return "<ExclusionRegion {chromosome}:{start}-{stop}>".format(
+        return "<ExclusionRegion {chromosome}:{start}-{end}>".format(
             chromosome=self.chromosome,
             start=self.start,
             end=self.end)
