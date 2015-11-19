@@ -109,12 +109,12 @@ class Event(object):
         if self.chrA == self.chrB and self.sv_type != 'ITX':
             return '.'
         # return for the CTX events
-        return 'N[{}:{}['.format(self.chrB, self.chrBpos)
+        return 'N[{chrB}:{chrBpos}['.format(chrB=self.chrB, chrBpos=self.chrBpos)
 
     @property
     def hexdigest(self):
         if not self._hash:
-            self._hash = hashlib.sha1(str(self)).hexdigest()
+            self._hash = hashlib.sha1(str(self).encode('utf-8')).hexdigest()
         return self._hash
 
     def __repr__(self):

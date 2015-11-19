@@ -1,0 +1,6 @@
+pip
+mkdocs
+six
+coveralls
+unittest2
+nose2

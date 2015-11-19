@@ -6,7 +6,8 @@ if sys.version_info < (2, 6):
 
 # Todo: How does this play with pip freeze requirement files?
 requires = ['pyvcf',
-            'natsort']
+            'natsort',
+            'six']
 
 # Python 2.6 does not include the argparse module.
 try:
