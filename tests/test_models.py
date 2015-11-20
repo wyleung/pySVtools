@@ -63,13 +63,16 @@ class TestModels(unittest2.TestCase):
         self.assertEqual(eventA, eventB)
 
     def test_event_equal_no_match_by_flanking(self):
+        """
+            This case uses 2 events that whould never match because of the non-overlap and not beeing within the flanking
+        """
         chrA = "chr1"
         chrB = "chr1"
         chrApos = 1
         chrBpos = 5
-        eventA = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="DEL")
-        eventB = pysvtools.models.Event(chrA, chrApos + 5, chrB, chrBpos + 5, sv_type="DEL")
-        self.assertEqual(eventA, eventB)
+        eventA = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos, sv_type="DEL", cp_flank=2)
+        eventB = pysvtools.models.Event(chrA, chrApos + 5, chrB, chrBpos + 5, sv_type="DEL", cp_flank=2)
+        self.assertNotEquals(eventA, eventB)
 
     def test_event_size(self):
         chrA = "chr1"
@@ -144,6 +147,18 @@ class TestModels(unittest2.TestCase):
     def test_event_string(self):
         chrA = "chr1"
         chrB = "chr1"
+        chrApos = 1
+        chrBpos = 5
+        event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
+        self.assertIsInstance(event.__str__(), string_types)
+        self.assertIn(chrA, event.bedRow)
+        self.assertIn(chrApos.__str__(), event.__repr__())
+        self.assertIn(chrB, event.__repr__())
+        self.assertIn(chrBpos.__str__(), event.__repr__())
+
+    def test_event_string_chrB(self):
+        chrA = "chr1"
+        chrB = "chr2"
         chrApos = 1
         chrBpos = 5
         event = pysvtools.models.Event(chrA, chrApos, chrB, chrBpos)
