@@ -32,7 +32,7 @@ setup(
     test_suite='nose2.collector.collector',
     entry_points = {
         'console_scripts': [
-            'mergevcf = pysvtools.merge:main'
+            'vcf_merge_sv_events = pysvtools.merge:main'
         ]
     },
     classifiers = [
