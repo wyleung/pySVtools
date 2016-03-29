@@ -32,7 +32,7 @@ def extractTXmate(record):
     return [chrB, chrBpos]
 
 
-def vcfHeader():
+def vcfHeader(sampleList=["default"]):
     ts_now = datetime.datetime.now()
     vcf_header = """##fileformat=VCFv4.1
 ##fileDate={filedate}
@@ -72,7 +72,7 @@ def vcfHeader():
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">""".format(filedate=ts_now.strftime("%Y%m%d"),
                                                                           version=__version__)
-    return vcf_header + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	default"
+    return vcf_header + "\n" + "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	{samples}".format(samples="\t".join(sampleList))
 
 
 def extractTXmateINFOFIELD(breakpoints):
@@ -99,6 +99,16 @@ def extractDPFromRecord(record):
     elif len(record.samples):
         return getattr(record.samples[0].data, 'DP', 0)
     return 0
+
+
+def extractGTFromRecord(record):
+    if 'GT' in record.INFO.keys():
+        if type(record.INFO['GT']) == type(list):
+            return record.INFO['GT'][0]
+        return record.INFO['GT']
+    elif len(record.samples):
+        return getattr(record.samples[0].data, 'GT', 0)
+    return "1/."
 
 
 def firstFromList(arr):
@@ -169,7 +179,7 @@ def formatBedTrack(mergedHit):
     return formatted_bed
 
 
-def formatVCFRecord(mergedHit):
+def formatVCFRecord(mergedHit, hits, sampleList):
     # TODO: write the DP for each of the callers/sample
     INFOFIELDS = "IMPRECISE;SVTYPE={};CHR2={};END={};SVMETHOD={svmethod}".format(
         mergedHit.sv_type,
@@ -177,11 +187,22 @@ def formatVCFRecord(mergedHit):
         mergedHit.chrBpos,
         svmethod=mergedHit.svmethod
     )
-    FORMATFIELDS = ":".join(map(str, [
-        '1/.',
-        mergedHit.dp]))
 
-    formattedVCFRecord = "{chrA}\t{pos}\t{id}\t{ref}\t<{alt}>\t{qual}\t{filter}\t{info}\tGT:DP\t{format}".format(
+    FORMATFIELDS_SAMPLES = []
+
+    for sample in sampleList:
+        if sample in hits.keys():
+            FORMATFIELDS_SAMPLES.append("{gt}:{dp}:{start}:{end}:{svmethod}".format(
+                gt=hits[sample].gt,
+                dp=hits[sample].dp,
+                start=hits[sample].chrApos,
+                end=hits[sample].chrBpos,
+                svmethod=hits[sample].svmethod
+            ))
+        else:
+            FORMATFIELDS_SAMPLES.append("./.:0:0:0:None")
+
+    formattedVCFRecord = "{chrA}\t{pos}\t{id}\t{ref}\t<{alt}>\t{qual}\t{filter}\t{info}\t{formattypes}\t{format}".format(
         chrA=mergedHit.chrA,
         pos=mergedHit.chrApos,
         id='.',
@@ -190,7 +211,8 @@ def formatVCFRecord(mergedHit):
         qual='100',
         filter='PASS',
         info=INFOFIELDS,
-        format=FORMATFIELDS
+        formattypes="GT:DP:START:END:SVMETHOD",
+        format="\t".join(FORMATFIELDS_SAMPLES)
     )
     return formattedVCFRecord
 

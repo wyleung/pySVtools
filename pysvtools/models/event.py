@@ -10,7 +10,7 @@ __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 class Event(object):
     centerpoint_flanking = 100
 
-    def __init__(self, chrA, chrApos, chrB, chrBpos, sv_type=None, cp_flank=None, dp=0, svmethod=""):
+    def __init__(self, chrA, chrApos, chrB, chrBpos, sv_type=None, cp_flank=None, dp=0, gt="", svmethod="", *args, **kwargs):
         (self.chrA, self.chrApos), (self.chrB, self.chrBpos) = sorted([(chrA, chrApos), (chrB, chrBpos)])
 
         self.chrApos = int(self.chrApos)
@@ -31,6 +31,8 @@ class Event(object):
         self.centerpoint = self.get_centerpoint
         self.sv_type = sv_type
         self.centerpointFlanking = cp_flank or self.centerpoint_flanking
+
+        self.gt = gt
         self.dp = dp
         self._hash = None
 

@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from pysvtools.models import Event
-from pysvtools.utils import extractTXmate, extractDPFromRecord, getSVType, getSVLEN, formatBedTrack, \
+from pysvtools.utils import extractTXmate, extractDPFromRecord, extractGTFromRecord, getSVType, getSVLEN, formatBedTrack, \
     formatVCFRecord, vcfHeader, build_exclusion
 
 
@@ -82,6 +82,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmetho
                           end, sv_type="TRA",
                           cp_flank=centerpointFlanking,
                           dp=extractDPFromRecord(record),
+                          gt=extractGTFromRecord(record),
                           svmethod=svmethod)
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
                 svDB[t.virtualChr].append(t)
@@ -94,6 +95,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmetho
                       sv_type='TRA',
                       cp_flank=centerpointFlanking,
                       dp=extractDPFromRecord(record),
+                      gt=extractGTFromRecord(record),
                       svmethod=svmethod)
             try:
                 svDB[t.virtualChr] = svDB.get(t.virtualChr, [])
@@ -120,6 +122,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmetho
                           sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
                           dp=extractDPFromRecord(record),
+                          gt=extractGTFromRecord(record),
                           svmethod=svmethod)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
@@ -146,6 +149,7 @@ def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmetho
                           sv_type=SVTYPE,
                           cp_flank=centerpointFlanking,
                           dp=extractDPFromRecord(record),
+                          gt=extractGTFromRecord(record),
                           svmethod=svmethod)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
@@ -162,7 +166,8 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     regions_out_file = open(regions_out, "w")
     vcf_output_file = open(vcf_output, "w")
 
-    samplelist = vcf_files
+    sampleList = vcf_files
+    sampleNames = [ os.path.basename(x).replace(".vcf", "") for x in vcf_files ]
 
     sampleDB = collections.OrderedDict()
     svDB = collections.OrderedDict()
@@ -174,7 +179,7 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     for exclusion_region in exclusion_regions:
         edb += build_exclusion(exclusion_region)
 
-    for s in samplelist:
+    for s in sampleList:
         logger.info('Reading SV-events from sample: {} '.format(s))
         sampleDB[s] = vcf.Reader(open(s, 'r'))
 
@@ -228,13 +233,13 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
                         t2.matched_in = m
 
                         # TODO: write getter method for the Event instead now by accessing the internal class variable
-                        virtualchrom = _m.virtualChr
+                        virtualChromosome = _m.virtualChr
 
                         # split out per chromosome storage
-                        commonhits[virtualchrom] = commonhits.get(virtualchrom, collections.OrderedDict())
-                        commonhits[virtualchrom][m] = commonhits[virtualchrom].get(m, collections.OrderedDict())
-                        commonhits[virtualchrom][m][s1] = t1
-                        commonhits[virtualchrom][m][s2] = t2
+                        commonhits[virtualChromosome] = commonhits.get(virtualChromosome, collections.OrderedDict())
+                        commonhits[virtualChromosome][m] = commonhits[virtualChromosome].get(m, collections.OrderedDict())
+                        commonhits[virtualChromosome][m][s1] = t1
+                        commonhits[virtualChromosome][m][s2] = t2
                         _match += 1
 
                         # when found, continue? It is the best approach to break this long list comparison?
@@ -242,10 +247,10 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
             logger.debug("Common hits so far in {}: {} / {} vs {}".format(_chromosome, _match, s1_n_calls, s2_n_calls))
 
     # vcf header
-    print(vcfHeader(), file=vcf_output_file)
+    print(vcfHeader(sampleList=sampleNames), file=vcf_output_file)
 
     # tsv file
-    samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x).strip(".vcf")), samplelist))
+    samplecols = "\t".join(map(lambda x: "{}\tsize".format(os.path.basename(x).strip(".vcf")), sampleList))
     header_line = "\t".join(['ChrA', 'ChrApos', 'ChrB', 'ChrBpos', 'SVTYPE', 'DP', 'Size', samplecols])
 
     tsv_report_output = open(output_file, 'w')
@@ -255,34 +260,34 @@ def startMerge(vcf_files, exclusion_regions, output_file, centerpointFlanking, b
     all_locations = []
 
     for virtualChr in natsorted(commonhits.keys()):
-        for s, items in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].items()[0][1].chrApos):
-            if len(items):
+        for s, hits in sorted(commonhits[virtualChr].items(), key=lambda hit: hit[1].items()[0][1].chrApos):
+            if len(hits):
                 # check which samples has the same
                 locations_found = []
-                for sample in samplelist:
-                    if sample in items.keys():
-                        locations_found.append("{}\t{}".format(items[sample], items[sample].size))
+                for sample in sampleList:
+                    if sample in hits.keys():
+                        locations_found.append("{}\t{}".format(hits[sample], hits[sample].size))
                         # track all locations found for later intersecting or complementing the set of found/not-found
-                        all_locations.append(items[sample])
+                        all_locations.append(hits[sample])
                     else:
                         locations_found.append("\t")
                 # get the key with the highest DP
-                sorted_by_dp = sorted(items.items(), key=lambda hit: hit[1].dp, reverse=True)
+                sorted_by_dp = sorted(hits.items(), key=lambda hit: hit[1].dp, reverse=True)
                 fKey = sorted_by_dp[0][0]
-                t = items[fKey]
+                outputRecord = hits[fKey]
 
-                print(formatVCFRecord(t), file=vcf_output_file)
+                print(formatVCFRecord(outputRecord, hits, sampleList), file=vcf_output_file)
 
                 tsv_report_output.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
-                    t.chrA,
-                    t.chrApos,
-                    t.chrB,
-                    t.chrBpos,
-                    t.sv_type,
-                    t.dp,
-                    t.size,
+                    outputRecord.chrA,
+                    outputRecord.chrApos,
+                    outputRecord.chrB,
+                    outputRecord.chrBpos,
+                    outputRecord.sv_type,
+                    outputRecord.dp,
+                    outputRecord.size,
                     "\t".join(locations_found)))
-                bed_structural_events.write(formatBedTrack(t))
+                bed_structural_events.write(formatBedTrack(outputRecord))
 
     for loc in all_locations:
         print(loc.bedRow, file=regions_out_file)
