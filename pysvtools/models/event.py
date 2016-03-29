@@ -3,7 +3,7 @@
 from __future__ import print_function
 import hashlib
 
-__desc__ = """"""
+__desc__ = """Describing a Structural Variation Event based on specifications of VCF v4.2"""
 __author__ = "Wai Yi Leung <w.y.leung@lumc.nl>"
 
 
@@ -28,7 +28,6 @@ class Event(object):
         _vChr.sort()
         self.virtualChr = "".join(_vChr)
 
-        self.centerpoint = self.get_centerpoint
         self.sv_type = sv_type
         self.centerpointFlanking = cp_flank or self.centerpoint_flanking
 
@@ -37,11 +36,29 @@ class Event(object):
         self._hash = None
 
     @property
-    def get_centerpoint(self):
-        cnt = int(self.size / 2)
+    def svmethod(self):
+        if self._svmethod.startswith("clever"):
+            return "clever"
+        elif self._svmethod.startswith("breakdancer"):
+            return "breakdancer"
+        return self._svmethod
+
+    @svmethod.setter
+    def svmethod(self, value):
+        self._svmethod = value
+
+    @svmethod.deleter
+    def svmethod(self):
+        del self._svmethod
+
+    @property
+    def centerpoint(self):
+        center = int(self.size / 2)
+        # order the positions ascending
         positions = [self.chrApos, self.chrBpos]
         positions.sort()
-        centerpoint = positions[0] + cnt
+
+        centerpoint = positions[0] + center
         return centerpoint
 
     @property
