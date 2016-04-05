@@ -179,7 +179,7 @@ def formatBedTrack(mergedHit):
     return formatted_bed
 
 
-def formatVCFRecord(mergedHit, hits, sampleList):
+def formatVCFRecord(mergedHit, hits, sampleNames):
     # TODO: write the DP for each of the callers/sample
     INFOFIELDS = "IMPRECISE;SVTYPE={};CHR2={};END={};SVMETHOD={svmethod}".format(
         mergedHit.sv_type,
@@ -190,7 +190,7 @@ def formatVCFRecord(mergedHit, hits, sampleList):
 
     FORMATFIELDS_SAMPLES = []
 
-    for sample in sampleList:
+    for sample in sampleNames:
         if sample in hits.keys():
             FORMATFIELDS_SAMPLES.append("{gt}:{dp}:{start}:{end}:{svmethod}".format(
                 gt=hits[sample].gt,
