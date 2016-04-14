@@ -33,7 +33,7 @@ class Event(object):
 
         self.gt = gt
         self.dp = dp
-        self._hash = None
+        self._hash = hashlib.sha1(str(self).encode('utf-8')).hexdigest()
 
     @property
     def svmethod(self):

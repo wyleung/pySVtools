@@ -50,7 +50,7 @@ class ReportExport(object):
 
 
 # read all samples in memory
-def loadEventFromVCF(s, vcf_reader, edb, centerpointFlanking, transonly, svmethod=""):
+def loadEventFromVCF(sampleName, vcf_reader, edb, centerpointFlanking, transonly, svmethod=""):
     """
         Loading VCF records and transform them to `Event`
     """
